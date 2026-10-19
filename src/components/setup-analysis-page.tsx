@@ -10,6 +10,13 @@ import { kitsetupsAuthFetch } from "../lib/api";
 type AnyData = Record<string, any>;
 
 const TIMEFRAMES = ["1w", "1d", "4h", "1h", "30m"];
+const ALLOWED_TIMEFRAMES = new Set(TIMEFRAMES);
+
+function timeframeText(value: any) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized === "multi-timeframe") return "MULTI-TIMEFRAME";
+  return ALLOWED_TIMEFRAMES.has(normalized) ? normalized.toUpperCase() : "—";
+}
 
 function fmt(value: any, digits = 2) {
   const number = Number(value);
@@ -69,7 +76,7 @@ function DataList({ items }: { items: any }) {
           ) : (
             <>
               <span className="font-medium text-zinc-200">{fmt(item?.price ?? item?.level ?? item?.value)}</span>
-              {item?.timeframe ? <span className="ml-2 font-mono text-[8px] text-zinc-600">{text(item.timeframe)}</span> : null}
+              {item?.timeframe && timeframeText(item.timeframe) !== "—" ? <span className="ml-2 font-mono text-[8px] text-zinc-600">{timeframeText(item.timeframe)}</span> : null}
               {item?.type ? <span className="ml-2 font-mono text-[8px] text-zinc-600">{text(item.type)}</span> : null}
               {item?.reason ? <p className="mt-1.5 leading-5 text-zinc-500">{item.reason}</p> : null}
             </>
@@ -238,7 +245,7 @@ function EntryStopTargets({ analysis, setup }: { analysis: AnyData; setup: AnyDa
       <Box title="Entry Analysis">
         <div className="grid grid-cols-2 gap-2">
           <Metric label="MODEL" value={text(first(entry?.model, setup?.setupType))} />
-          <Metric label="TIMEFRAME" value={text(first(entry?.timeframe, setup?.timeframe, analysis?.timeframe))} />
+          <Metric label="TIMEFRAME" value={timeframeText(first(entry?.timeframe, setup?.timeframe, analysis?.timeframe))} />
           <Metric label="ENTRY" value={`$${fmt(first(entry?.price, setup?.entry, analysis?.levels?.entry))}`} tone="blue" />
           <Metric label="BREAK LEVEL" value={`$${fmt(first(entry?.breakLevel, entry?.level))}`} />
         </div>
@@ -269,7 +276,7 @@ function EntryStopTargets({ analysis, setup }: { analysis: AnyData; setup: AnyDa
               </div>
               <p className="mt-3 text-xl font-semibold text-emerald-300">${fmt(target?.price)}</p>
               <p className="mt-3 text-xs text-zinc-500">Liquidity: {text(first(target?.liquidityClass, target?.liquidityType, target?.source))}</p>
-              <p className="mt-1 text-xs text-zinc-500">Timeframe: {text(target?.timeframe)}</p>
+              <p className="mt-1 text-xs text-zinc-500">Timeframe: {timeframeText(target?.timeframe)}</p>
               <p className="mt-2 text-xs leading-5 text-zinc-600">{first(target?.reason, target?.explanation, target?.description)}</p>
             </div>
           ))}
